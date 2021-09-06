@@ -2,8 +2,12 @@ package com.github.karthikreddii.servlets;
 
 import com.github.karthikreddii.services.IntegerToRomanService;
 
+import org.apache.sling.commons.metrics.Counter;
+import org.apache.sling.commons.metrics.Meter;
+import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletRequest;
 import org.apache.sling.testing.mock.sling.servlet.MockSlingHttpServletResponse;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.internal.util.reflection.Whitebox;
 
@@ -26,12 +30,30 @@ public class RomanNumeralsServletTest {
 
     IntegerToRomanService integerToRomanService = mock(IntegerToRomanService.class);
 
-    //Setup mock SlingHttpServletRequest and SlingHttpServletResponse
+    MetricsService metricsService = mock(MetricsService.class);
+
+    //Setup mock for required objects
     MockSlingHttpServletRequest request = mock(MockSlingHttpServletRequest.class);
     MockSlingHttpServletResponse response = mock(MockSlingHttpServletResponse.class);
+    Counter counter = mock(Counter.class);
+    Counter successCounter = mock(Counter.class);
+    Meter meter = mock(Meter.class);
 
     StringWriter responseStringWriter = new StringWriter();
     PrintWriter responsePrintWriter = new PrintWriter(responseStringWriter);
+
+    /**
+     * This method is called before every test method is executed.
+     * This will mock the required values for every test case.
+     */
+    @Before
+    public void setUp() {
+        Whitebox.setInternalState(romanNumeralsServlet, "metricsService", metricsService);
+        when(metricsService.counter("romanNumeral-pageHits")).thenReturn(counter);
+        when(metricsService.counter("romanNumeral-intInRange")).thenReturn(successCounter);
+        when(metricsService.meter("romanNumeral-MeterInfo")).thenReturn(meter);
+        when(response.getWriter()).thenReturn(responsePrintWriter);
+    }
 
     /**
      * This is a test case if the input is valid number that in between 1-3999
@@ -47,12 +69,12 @@ public class RomanNumeralsServletTest {
         Whitebox.setInternalState(romanNumeralsServlet, "integerToRomanService", integerToRomanService);
 
         when(request.getParameter("query")).thenReturn("77");
-        when(response.getWriter()).thenReturn(responsePrintWriter);
         when(response.getStatus()).thenReturn(200);
         when(integerToRomanService.intToRoman(Integer.parseInt(request.getParameter("query"))))
                 .thenReturn("LXXVII");
 
         romanNumeralsServlet.doGet(request, response);
+
         assertEquals("77", request.getParameter("query"));
         assertEquals(expectedResponse, responseStringWriter.toString());
         assertEquals(200, response.getStatus());
@@ -69,9 +91,9 @@ public class RomanNumeralsServletTest {
         String expectedResponse = "Your input is empty, enter a number between 1 and 3999";
 
         when(request.getParameter("query")).thenReturn(null);
-        when(response.getWriter()).thenReturn(responsePrintWriter);
 
         romanNumeralsServlet.doGet(request, response);
+
         assertNull(request.getParameter("query"));
         assertEquals(expectedResponse, responseStringWriter.toString());
     }
@@ -87,9 +109,9 @@ public class RomanNumeralsServletTest {
         String expectedResponse = "Please input a number between 1 and 3999";
 
         when(request.getParameter("query")).thenReturn("5000");
-        when(response.getWriter()).thenReturn(responsePrintWriter);
 
         romanNumeralsServlet.doGet(request, response);
+
         assertEquals("5000", request.getParameter("query"));
         assertEquals(expectedResponse, responseStringWriter.toString());
     }
@@ -105,9 +127,9 @@ public class RomanNumeralsServletTest {
         String expectedResponse = "Your input is not a valid number, enter a number between 1 and 3999";
 
         when(request.getParameter("query")).thenReturn("karthik");
-        when(response.getWriter()).thenReturn(responsePrintWriter);
 
         romanNumeralsServlet.doGet(request, response);
+
         assertEquals("karthik", request.getParameter("query"));
         assertEquals(expectedResponse, responseStringWriter.toString());
     }
