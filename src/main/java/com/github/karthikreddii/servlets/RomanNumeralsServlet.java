@@ -75,12 +75,14 @@ public class RomanNumeralsServlet extends SlingSafeMethodsServlet {
 
         if (input == null || input.equals("")) {
             writeValidationError(response, "Your input is empty, enter a number between 1 and 3999");
+            logger.debug("Your input {} is empty, enter a number between 1 and 3999", input);
             return;
         }
 
         if (!NumberUtil.isNumber(input)) {
             writeValidationError(response,
                     "Your input is not a valid number, enter a number between 1 and 3999");
+            logger.debug("Your input {} is not a valid number, enter a number between 1 and 3999", input);
             return;
         }
 
@@ -90,6 +92,8 @@ public class RomanNumeralsServlet extends SlingSafeMethodsServlet {
             Output res = new Output(input, output);
             response.getWriter().write(gson.toJson(res));
             successCounter.increment();
+            logger.info("Your input {} is a valid number and Roman number output {} is set to response",
+                    inputNumber,output);
         } else {
             writeValidationError(response, "Please input a number between 1 and 3999");
             logger.debug("Input number {} is out of range", inputNumber);
